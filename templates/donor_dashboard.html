@@ -21,12 +21,28 @@
         <a href="/logout" class="text-gray-500 underline px-4 py-2 rounded text-center">Logout</a>
       </div>
 
-      <!-- Placeholder for future list of donated foods -->
-      <div>
-        <h3 class="text-xl font-semibold mt-6 mb-2 text-green-800">Your Donated Food</h3>
+      <h3 class="text-xl font-semibold mt-6 mb-2 text-green-800">Your Donated Food</h3>
+      {% if donated_foods %}
+        <ul class="space-y-4">
+          {% for food in donated_foods %}
+            <li class="p-4 bg-green-50 rounded shadow flex flex-col md:flex-row md:items-center md:justify-between">
+              <div>
+                <strong>{{ food.food_name }}</strong>
+                <span class="ml-2 text-xs rounded px-2 py-1 {{ 'bg-yellow-200 text-yellow-900' if food.status == 'pending' else 'bg-green-200 text-green-900' if food.status == 'approved' else 'bg-gray-200 text-gray-800' if food.status == 'requested' else 'bg-blue-200 text-blue-900' if food.status == 'delivered' else 'bg-red-200 text-red-800' }}">{{ food.status|capitalize }}</span><br/>
+                Qty: {{ food.quantity }} | Expires {{ food.expiry_time.strftime('%Y-%m-%d %H:%M') }}<br/>
+                <span class="text-sm text-gray-500">{{ food.description }}</span>
+              </div>
+              {% if food.photo %}
+                <img src="{{ url_for('static', filename='uploads/' + food.photo) }}"
+                     alt="Food Photo"
+                     class="w-16 h-16 rounded object-cover mt-2 md:mt-0 border" />
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
         <p class="text-gray-500">You haven’t donated any food yet. Your donations will appear here.</p>
-        <!-- In future: loop and list foods here -->
-      </div>
+      {% endif %}
     </div>
   </main>
 

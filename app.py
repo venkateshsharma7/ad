@@ -9,14 +9,14 @@ import os
 # ==== CONFIG ====
 app = Flask(__name__)
 app.secret_key = "your_secret_key_here"
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 # Set your admin email(s) here
-ADMIN_EMAILS = {'vkrsharma1976@gmail.com'}  # <-- change to your real admin email!
+ADMIN_EMAILS = {'youradmin@email.com'}  # <-- change to your real admin email!
 
 # ==== DATABASE ====
 MONGO_URI = 'mongodb+srv://sharmavenkat765:Vh1vXfKkQPWAj0Dx@cluster0.kkexheb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
@@ -28,6 +28,10 @@ try:
     print("Successfully connected to MongoDB!")
 except Exception as e:
     print(f"Failed to connect to MongoDB: {e}")
+
+@app.context_processor
+def inject_admin_emails():
+    return dict(ADMIN_EMAILS=ADMIN_EMAILS)
 
 # ==== HELPERS ====
 def allowed_file(filename):
@@ -122,9 +126,13 @@ def dashboard():
     if email in ADMIN_EMAILS:
         return redirect(url_for('admin_dashboard'))
     if role == 'donor':
-        return render_template('donor_dashboard.html', name=name)
+        # Donor sees all their donations
+        donated_foods = list(db.food.find({'donor_id': session['user_id']}).sort('timestamp', -1))
+        return render_template('donor_dashboard.html', name=name, donated_foods=donated_foods)
     elif role == 'recipient':
-        return render_template('recipient_dashboard.html', name=name)
+        # Recipient sees all their food requests
+        my_orders = list(db.food.find({'requested_by': session['user_id']}).sort('requested_at', -1))
+        return render_template('recipient_dashboard.html', name=name, my_orders=my_orders)
     else:
         flash('Unknown role.')
         return redirect(url_for('logout'))
@@ -135,7 +143,6 @@ def donate_food():
     if session.get('role') != 'donor':
         flash("Only donors can donate food.")
         return redirect(url_for('dashboard'))
-
     if request.method == 'POST':
         food_name = request.form.get('food_name')
         description = request.form.get('description')
