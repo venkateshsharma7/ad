@@ -16,7 +16,7 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 # Set your admin email(s) here
-ADMIN_EMAILS = {'youradmin@email.com'}  # <-- change to your real admin email!
+ADMIN_EMAILS = {'vkrsharma1976@gmail.com'}
 
 # ==== DATABASE ====
 MONGO_URI = 'mongodb+srv://sharmavenkat765:Vh1vXfKkQPWAj0Dx@cluster0.kkexheb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
@@ -126,11 +126,9 @@ def dashboard():
     if email in ADMIN_EMAILS:
         return redirect(url_for('admin_dashboard'))
     if role == 'donor':
-        # Donor sees all their donations
         donated_foods = list(db.food.find({'donor_id': session['user_id']}).sort('timestamp', -1))
         return render_template('donor_dashboard.html', name=name, donated_foods=donated_foods)
     elif role == 'recipient':
-        # Recipient sees all their food requests
         my_orders = list(db.food.find({'requested_by': session['user_id']}).sort('requested_at', -1))
         return render_template('recipient_dashboard.html', name=name, my_orders=my_orders)
     else:
@@ -214,7 +212,7 @@ def order_food(food_id):
 @admin_required
 def admin_dashboard():
     users = list(db.users.find({'status': 'pending'}))
-    foods = list(db.food.find({'status': 'pending'}))
+    foods = list(db.food.find({'status': {'$in': ['pending', 'requested']}}))
     return render_template('admin_dashboard.html', users=users, foods=foods)
 
 @app.route('/admin/approve_user/<user_id>', methods=['POST'])
@@ -247,6 +245,14 @@ def approve_food(food_id):
 def reject_food(food_id):
     db.food.update_one({'_id': ObjectId(food_id)}, {'$set': {'status': 'rejected'}})
     flash('Food donation rejected.')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/deliver_food/<food_id>', methods=['POST'])
+@login_required
+@admin_required
+def mark_delivered(food_id):
+    db.food.update_one({'_id': ObjectId(food_id)}, {'$set': {'status': 'delivered', 'delivered_at': datetime.utcnow()}})
+    flash('Food marked as delivered.')
     return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':
