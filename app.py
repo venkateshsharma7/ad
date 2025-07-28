@@ -4,8 +4,9 @@ import os
 from werkzeug.utils import secure_filename
 from functools import wraps
 from datetime import datetime, timedelta
+from bson.objectid import ObjectId
 
-# === Flask and Upload Config ===
+# === Flask Config ===
 app = Flask(__name__)
 app.secret_key = "your_secret_key_here"
 UPLOAD_FOLDER = 'uploads'
@@ -17,7 +18,7 @@ if not os.path.exists(UPLOAD_FOLDER):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# === MongoDB Setup (Your URI) ===
+# === MongoDB Setup (your provided URI) ===
 MONGO_URI = 'mongodb+srv://sharmavenkat765:Vh1vXfKkQPWAj0Dx@cluster0.kkexheb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
 db = client['annadaatha']
@@ -38,7 +39,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# === Routes ===
+# === ROUTES ===
 
 @app.route('/')
 def home():
@@ -151,6 +152,36 @@ def donate_food():
         return redirect(url_for('dashboard'))
 
     return render_template('donate_food.html')
+
+@app.route('/browse_food')
+@login_required
+def browse_food():
+    if session.get('role') != 'recipient':
+        flash('Only recipients can browse food.')
+        return redirect(url_for('dashboard'))
+    now = datetime.utcnow()
+    foods = list(db.food.find({'status': 'approved', 'expiry_time': {'$gt': now}}).sort('timestamp', -1))
+    return render_template('browse_food.html', foods=foods)
+
+@app.route('/order_food/<food_id>', methods=['POST'])
+@login_required
+def order_food(food_id):
+    if session.get('role') != 'recipient':
+        flash('Only recipients can order food.')
+        return redirect(url_for('dashboard'))
+    recipient_id = session.get('user_id')
+    updated = db.food.update_one(
+        {'_id': ObjectId(food_id), 'status': 'approved'},
+        {'$set': {
+            'status': 'requested',
+            'requested_by': recipient_id,
+            'requested_at': datetime.utcnow()
+        }})
+    if updated.modified_count == 1:
+        flash('Food requested! Please wait for confirmation.')
+    else:
+        flash('Unable to request this food.')
+    return redirect(url_for('browse_food'))
 
 if __name__ == '__main__':
     app.run(debug=True)

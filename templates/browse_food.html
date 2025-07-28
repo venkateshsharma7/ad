@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Available Food | AnnaDaatha</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-gray-50">
+  <div class="max-w-3xl mx-auto p-8 mt-12 bg-white rounded-xl shadow">
+    <h2 class="text-2xl font-bold mb-6 text-green-700">Available Food</h2>
+    {% if foods %}
+      <div class="space-y-8">
+        {% for food in foods %}
+          <div class="p-6 bg-green-50 rounded-lg shadow flex flex-col md:flex-row items-center md:items-start">
+            {% if food.photo %}
+              <img src="{{ url_for('static', filename='../uploads/' + food.photo) }}" alt="Food Photo" class="w-32 h-32 rounded mr-6 mb-4 md:mb-0 object-cover border shadow">
+            {% endif %}
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-green-800">{{ food.food_name }}</h3>
+              <p class="text-gray-700 mb-1"><span class="font-semibold">Description:</span> {{ food.description }}</p>
+              <p class="text-gray-700 mb-1"><span class="font-semibold">Quantity:</span> {{ food.quantity }}</p>
+              <form action="/order_food/{{ food._id }}" method="post" class="mt-2">
+                <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" type="submit">Request This Food</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-gray-500">Sorry, no food currently available.</p>
+    {% endif %}
+    <a href="/dashboard" class="block mt-8 text-sm text-green-700 hover:underline text-center">Back to Dashboard</a>
+  </div>
+</body>
+</html>
