@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AnnaDaatha - Share Food, Fight Hunger</title>
+  <!-- Tailwind CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <!-- Font Awesome CDN for icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    .logo {
+      font-family: 'Inter', sans-serif;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+    #mobile-menu.active {
+      display: flex;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+    .animate-fade-in {
+      animation: fadeIn 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .hero {
+      background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+    }
+    .swiggy-btn {
+      background: #15803d;
+      color: white;
+      font-weight: 700;
+      padding: 16px 32px;
+      border-radius: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: inline-block;
+      text-align: center;
+    }
+    .swiggy-btn:hover {
+      background: #166534;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    .feature-card {
+      border-radius: 16px;
+      background: white;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border: none;
+    }
+    .feature-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+    }
+    .feature-icon {
+      transition: transform 0.3s ease;
+    }
+    .feature-card:hover .feature-icon {
+      transform: scale(1.2);
+    }
+    .text-swiggy-heading {
+      font-weight: 800;
+      letter-spacing: -0.75px;
+      line-height: 1.15;
+    }
+    .footer-link {
+      transition: color 0.3s ease;
+    }
+    /* Responsive fix for mobile menu */
+    @media (max-width: 768px) {
+      #mobile-menu {
+        display: none;
+      }
+      #mobile-menu.active {
+        display: flex;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+
+  <!-- Navbar -->
+  <nav class="navbar p-5 sticky top-0 z-50 bg-white shadow-sm">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-4xl font-extrabold logo text-green-700 tracking-tight">AnnaDaatha</h1>
+      <div class="hidden md:flex space-x-12">
+        <a href="/" class="text-gray-700 text-lg font-semibold hover:text-green-600 transition duration-200">Home</a>
+        <a href="/register" class="text-gray-700 text-lg font-semibold hover:text-green-600 transition duration-200">Register</a>
+        <a href="/login" class="text-gray-700 text-lg font-semibold hover:text-green-600 transition duration-200">Login</a>
+      </div>
+      <button id="menu-toggle" class="md:hidden focus:outline-none" aria-label="Menu Toggle">
+        <svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+      <div id="mobile-menu" class="hidden md:hidden flex-col space-y-5 mt-5 bg-white p-8 rounded-2xl shadow-lg absolute right-4 top-16 w-64">
+        <a href="/" class="text-gray-700 text-lg font-semibold hover:text-green-600">Home</a>
+        <a href="/register" class="text-gray-700 text-lg font-semibold hover:text-green-600">Register</a>
+        <a href="/login" class="text-gray-700 text-lg font-semibold hover:text-green-600">Login</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero py-24">
+    <div class="container mx-auto text-center text-white px-6">
+      <h2 class="text-5xl md:text-6xl font-extrabold mb-8 animate-fade-in text-swiggy-heading">Share Food, Fight Hunger</h2>
+      <p class="text-xl md:text-2xl mb-12 max-w-3xl mx-auto animate-fade-in text-gray-100">
+        AnnaDaatha connects food donors with those in need, reducing waste and championing SDG 2: Zero Hunger.
+      </p>
+      <div class="flex flex-col md:flex-row justify-center gap-6">
+        <a href="/register?role=donor" class="swiggy-btn">Donate Food</a>
+        <a href="/register?role=recipient" class="swiggy-btn bg-white text-green-700 hover:bg-green-50">Get Food</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="py-20 bg-white">
+    <div class="container mx-auto text-center px-6">
+      <h3 class="text-4xl md:text-5xl font-bold mb-16 text-gray-900 text-swiggy-heading">
+        Why Choose AnnaDaatha?
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="p-10 feature-card">
+          <i class="fas fa-leaf text-4xl text-green-600 mb-5 feature-icon"></i>
+          <h4 class="text-2xl font-semibold mb-4 text-gray-900 text-swiggy-heading">Reduce Food Waste</h4>
+          <p class="text-gray-600 text-lg">Transform surplus food from events or homes into meaningful contributions.</p>
+        </div>
+        <div class="p-10 feature-card">
+          <i class="fas fa-hands-helping text-4xl text-green-600 mb-5 feature-icon"></i>
+          <h4 class="text-2xl font-semibold mb-4 text-gray-900 text-swiggy-heading">Feed the Hungry</h4>
+          <p class="text-gray-600 text-lg">Deliver nourishment to those in need, advancing SDG 2.</p>
+        </div>
+        <div class="p-10 feature-card">
+          <i class="fas fa-truck text-4xl text-green-600 mb-5 feature-icon"></i>
+          <h4 class="text-2xl font-semibold mb-4 text-gray-900 text-swiggy-heading">Seamless Delivery</h4>
+          <p class="text-gray-600 text-lg">Swift pickup and delivery to ensure fresh meals reach recipients.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white p-12 mt-10">
+    <div class="container mx-auto text-center px-6">
+      <p class="mb-4 text-gray-300 text-base">&copy; 2025 AnnaDaatha. All rights reserved.</p>
+      <p class="mb-8 text-gray-300 text-base">
+        Proudly supporting
+        <a href="https://www.un.org/sustainabledevelopment/hunger/" class="text-green-400 hover:text-green-300 footer-link" target="_blank" rel="noopener">SDG 2: Zero Hunger</a>
+      </p>
+      <div class="flex justify-center space-x-8">
+        <a href="#" class="text-gray-300 hover:text-green-400 footer-link" aria-label="Twitter"><i class="fab fa-twitter text-xl"></i></a>
+        <a href="#" class="text-gray-300 hover:text-green-400 footer-link" aria-label="Facebook"><i class="fab fa-facebook text-xl"></i></a>
+        <a href="#" class="text-gray-300 hover:text-green-400 footer-link" aria-label="Instagram"><i class="fab fa-instagram text-xl"></i></a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Inline JavaScript -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Mobile menu toggle
+      const menuToggle = document.getElementById('menu-toggle');
+      const mobileMenu = document.getElementById('mobile-menu');
+      menuToggle.addEventListener('click', () => {
+        mobileMenu.classList.toggle('active');
+      });
+      // Accessibility improvement: close mobile menu when a link is clicked
+      document.querySelectorAll('#mobile-menu a').forEach(link => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.remove('active');
+        });
+      });
+    });
+  </script>
+</body>
+</html>
