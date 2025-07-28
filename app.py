@@ -3,26 +3,25 @@ from pymongo import MongoClient
 import os
 from werkzeug.utils import secure_filename
 from functools import wraps
+from datetime import datetime, timedelta
 
-# === Configurations ===
+# === Flask and Upload Config ===
 app = Flask(__name__)
-app.secret_key = "your_secret_key_here"   # Change to a strong, random value for production
+app.secret_key = "your_secret_key_here"
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# === MongoDB Setup ===
+# === MongoDB Setup (Your URI) ===
 MONGO_URI = 'mongodb+srv://sharmavenkat765:Vh1vXfKkQPWAj0Dx@cluster0.kkexheb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
 db = client['annadaatha']
 
-# MongoDB connection test
 try:
     client.admin.command('ping')
     print("Successfully connected to MongoDB!")
@@ -39,7 +38,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# === ROUTES ===
+# === Routes ===
 
 @app.route('/')
 def home():
@@ -66,9 +65,9 @@ def register():
             'role': role,
             'name': name,
             'email': email,
-            'password': password,
+            'password': password,   # For real use, hash this!
             'kyc_file': filename,
-            'status': 'pending'   # Awaiting admin approval
+            'status': 'pending'
         })
         flash("Registration successful! Please wait for admin approval.")
         return redirect(url_for('home'))
@@ -110,6 +109,48 @@ def dashboard():
     else:
         flash('Unknown role.')
         return redirect(url_for('logout'))
+
+@app.route('/donate_food', methods=['GET', 'POST'])
+@login_required
+def donate_food():
+    if session.get('role') != 'donor':
+        flash("Only donors can donate food.")
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        food_name = request.form.get('food_name')
+        description = request.form.get('description')
+        quantity = request.form.get('quantity')
+        expiry_hours = int(request.form.get('expiry_hours'))
+        donor_id = session.get('user_id')
+        photo_file = request.files.get('photo')
+        photo_filename = None
+
+        if photo_file and photo_file.filename:
+            if allowed_file(photo_file.filename):
+                photo_filename = "food_" + secure_filename(photo_file.filename)
+                photo_path = os.path.join(app.config['UPLOAD_FOLDER'], photo_filename)
+                photo_file.save(photo_path)
+            else:
+                flash("Invalid image file type (must be PNG/JPG/JPEG).")
+                return redirect(request.url)
+
+        expiry_time = datetime.utcnow() + timedelta(hours=expiry_hours)
+        food_doc = {
+            'food_name': food_name,
+            'description': description,
+            'quantity': quantity,
+            'donor_id': donor_id,
+            'photo': photo_filename,
+            'expiry_time': expiry_time,
+            'status': 'pending',
+            'timestamp': datetime.utcnow()
+        }
+        db.food.insert_one(food_doc)
+        flash("Food donation submitted! Awaiting admin approval.")
+        return redirect(url_for('dashboard'))
+
+    return render_template('donate_food.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
