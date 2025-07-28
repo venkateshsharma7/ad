@@ -1,12 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from pymongo import MongoClient
-import os
 from werkzeug.utils import secure_filename
 from functools import wraps
 from datetime import datetime, timedelta
 from bson.objectid import ObjectId
+import os
 
-# === Flask Config ===
+# ==== CONFIG ====
 app = Flask(__name__)
 app.secret_key = "your_secret_key_here"
 UPLOAD_FOLDER = 'uploads'
@@ -15,10 +15,10 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+# Set your admin email(s) here
+ADMIN_EMAILS = {'vkrsharma1976@gmail.com'}  # <-- change to your real admin email!
 
-# === MongoDB Setup (your provided URI) ===
+# ==== DATABASE ====
 MONGO_URI = 'mongodb+srv://sharmavenkat765:Vh1vXfKkQPWAj0Dx@cluster0.kkexheb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
 db = client['annadaatha']
@@ -29,7 +29,10 @@ try:
 except Exception as e:
     print(f"Failed to connect to MongoDB: {e}")
 
-# === Login Required Decorator ===
+# ==== HELPERS ====
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -39,7 +42,16 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# === ROUTES ===
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user_id' not in session or session.get('email') not in ADMIN_EMAILS:
+            flash('Admin access required!')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
+# ==== ROUTES ====
 
 @app.route('/')
 def home():
@@ -66,7 +78,7 @@ def register():
             'role': role,
             'name': name,
             'email': email,
-            'password': password,   # For real use, hash this!
+            'password': password,   # In production, hash this!
             'kyc_file': filename,
             'status': 'pending'
         })
@@ -85,7 +97,10 @@ def login():
             session['user_id'] = str(user['_id'])
             session['role'] = user['role']
             session['name'] = user['name']
+            session['email'] = user['email']
             flash('Login successful!')
+            if email in ADMIN_EMAILS:
+                return redirect(url_for('admin_dashboard'))
             return redirect(url_for('dashboard'))
         else:
             flash('Invalid email or password. Please try again.')
@@ -103,6 +118,9 @@ def logout():
 def dashboard():
     role = session.get('role')
     name = session.get('name')
+    email = session.get('email')
+    if email in ADMIN_EMAILS:
+        return redirect(url_for('admin_dashboard'))
     if role == 'donor':
         return render_template('donor_dashboard.html', name=name)
     elif role == 'recipient':
@@ -182,6 +200,47 @@ def order_food(food_id):
     else:
         flash('Unable to request this food.')
     return redirect(url_for('browse_food'))
+
+# ==== ADMIN ROUTES ====
+@app.route('/admin')
+@login_required
+@admin_required
+def admin_dashboard():
+    users = list(db.users.find({'status': 'pending'}))
+    foods = list(db.food.find({'status': 'pending'}))
+    return render_template('admin_dashboard.html', users=users, foods=foods)
+
+@app.route('/admin/approve_user/<user_id>', methods=['POST'])
+@login_required
+@admin_required
+def approve_user(user_id):
+    db.users.update_one({'_id': ObjectId(user_id)}, {'$set': {'status': 'approved'}})
+    flash('User approved.')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/reject_user/<user_id>', methods=['POST'])
+@login_required
+@admin_required
+def reject_user(user_id):
+    db.users.update_one({'_id': ObjectId(user_id)}, {'$set': {'status': 'rejected'}})
+    flash('User rejected.')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/approve_food/<food_id>', methods=['POST'])
+@login_required
+@admin_required
+def approve_food(food_id):
+    db.food.update_one({'_id': ObjectId(food_id)}, {'$set': {'status': 'approved'}})
+    flash('Food donation approved.')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/reject_food/<food_id>', methods=['POST'])
+@login_required
+@admin_required
+def reject_food(food_id):
+    db.food.update_one({'_id': ObjectId(food_id)}, {'$set': {'status': 'rejected'}})
+    flash('Food donation rejected.')
+    return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':
     app.run(debug=True)

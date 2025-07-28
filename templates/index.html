@@ -87,27 +87,7 @@
 </head>
 <body class="bg-gray-50">
 
-  <!-- Navbar -->
-  <nav class="navbar p-5 sticky top-0 z-50 bg-white shadow-sm">
-    <div class="container mx-auto flex justify-between items-center">
-      <h1 class="text-4xl font-extrabold logo text-green-700 tracking-tight">AnnaDaatha</h1>
-      <div class="hidden md:flex space-x-12">
-        <a href="/" class="text-gray-700 text-lg font-semibold hover:text-green-600 transition duration-200">Home</a>
-        <a href="/register" class="text-gray-700 text-lg font-semibold hover:text-green-600 transition duration-200">Register</a>
-        <a href="/login" class="text-gray-700 text-lg font-semibold hover:text-green-600 transition duration-200">Login</a>
-      </div>
-      <button id="menu-toggle" class="md:hidden focus:outline-none" aria-label="Menu Toggle">
-        <svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-        </svg>
-      </button>
-      <div id="mobile-menu" class="hidden md:hidden flex-col space-y-5 mt-5 bg-white p-8 rounded-2xl shadow-lg absolute right-4 top-16 w-64">
-        <a href="/" class="text-gray-700 text-lg font-semibold hover:text-green-600">Home</a>
-        <a href="/register" class="text-gray-700 text-lg font-semibold hover:text-green-600">Register</a>
-        <a href="/login" class="text-gray-700 text-lg font-semibold hover:text-green-600">Login</a>
-      </div>
-    </div>
-  </nav>
+  {% include "navbar.html" %}
 
   <!-- Hero Section -->
   <section class="hero py-24">
@@ -171,15 +151,16 @@
       // Mobile menu toggle
       const menuToggle = document.getElementById('menu-toggle');
       const mobileMenu = document.getElementById('mobile-menu');
-      menuToggle.addEventListener('click', () => {
-        mobileMenu.classList.toggle('active');
-      });
-      // Accessibility improvement: close mobile menu when a link is clicked
-      document.querySelectorAll('#mobile-menu a').forEach(link => {
-        link.addEventListener('click', () => {
-          mobileMenu.classList.remove('active');
+      if (menuToggle && mobileMenu) {
+        menuToggle.addEventListener('click', () => {
+          mobileMenu.classList.toggle('active');
         });
-      });
+        document.querySelectorAll('#mobile-menu a').forEach(link => {
+          link.addEventListener('click', () => {
+            mobileMenu.classList.remove('active');
+          });
+        });
+      }
     });
   </script>
 </body>
