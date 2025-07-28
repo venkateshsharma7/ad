@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register | AnnaDaatha</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-50 flex items-center justify-center h-screen">
+  <form action="/register" method="post" enctype="multipart/form-data" class="bg-white shadow-lg rounded-xl p-8 max-w-md w-full">
+    <h2 class="text-2xl font-bold mb-6 text-green-700">Register for AnnaDaatha</h2>
+    <label class="block mb-2 font-semibold">Role</label>
+    <select name="role" required class="mb-4 w-full p-2 border rounded focus:outline-none">
+      <option value="donor">Donor</option>
+      <option value="recipient">Recipient</option>
+    </select>
+    <label class="block mb-2 font-semibold" for="name">Full Name</label>
+    <input name="name" required class="mb-4 w-full p-2 border rounded focus:outline-none" />
+    <label class="block mb-2 font-semibold" for="email">Email</label>
+    <input type="email" name="email" required class="mb-4 w-full p-2 border rounded focus:outline-none" />
+    <label class="block mb-2 font-semibold" for="password">Password</label>
+    <input type="password" name="password" required class="mb-4 w-full p-2 border rounded focus:outline-none" />
+    <label class="block mb-2 font-semibold" for="kyc">KYC Document (PDF/JPG)</label>
+    <input type="file" name="kyc" accept=".jpg,.jpeg,.png,.pdf" required class="mb-4 w-full" />
+    <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full" type="submit">Register</button>
+    <p class="text-sm text-gray-500 mt-4">Already registered? <a href="/login" class="text-green-700 hover:underline">Login here</a>.</p>
+  </form>
+</body>
+</html>
