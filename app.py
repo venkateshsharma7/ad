@@ -1,41 +1,31 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from pymongo import MongoClient
-from werkzeug.utils import secure_filename
 from functools import wraps
 from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 import os
+import requests
 
 # ==== CONFIG ====
 app = Flask(__name__)
-app.secret_key = "your_secret_key_here"
+app.secret_key = "your_secret_key_here"  # CHANGE this for production!
+
+ADMIN_EMAILS = {'vkrsharma1976@gmail.com'}
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-# Set your admin email(s) here
-ADMIN_EMAILS = {'vkrsharma1976@gmail.com'}
+# Unsplash API Access Key (replace with your own)
+UNSPLASH_ACCESS_KEY = "PAqKqdFq2W9KgIu04skiiNGE4XWRkNCJHrYWqHStYMg"
 
-# ==== DATABASE ====
 MONGO_URI = 'mongodb+srv://sharmavenkat765:Vh1vXfKkQPWAj0Dx@cluster0.kkexheb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
 db = client['annadaatha']
 
-try:
-    client.admin.command('ping')
-    print("Successfully connected to MongoDB!")
-except Exception as e:
-    print(f"Failed to connect to MongoDB: {e}")
-
 @app.context_processor
 def inject_admin_emails():
     return dict(ADMIN_EMAILS=ADMIN_EMAILS)
-
-# ==== HELPERS ====
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def login_required(f):
     @wraps(f)
@@ -55,7 +45,36 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# ==== ROUTES ====
+def download_unsplash_image(food_name, save_dir=UPLOAD_FOLDER, access_key=UNSPLASH_ACCESS_KEY):
+    """Fetch the best Unsplash image URL for food_name and save image locally, return filename."""
+    query = food_name.strip() + ' food'
+    url = 'https://api.unsplash.com/search/photos'
+    params = {
+        'query': query,
+        'client_id': access_key,
+        'per_page': 1,
+        'orientation': 'landscape'
+    }
+    try:
+        resp = requests.get(url, params=params, timeout=8)
+        data = resp.json()
+        results = data.get('results', [])
+        if not results:
+            return None
+        image_url = results[0]['urls']['regular']
+        # Normalize filename: only alphanumeric + underscore, lowercase
+        safe_name = ''.join(c for c in food_name.lower() if c.isalnum() or c in (' ', '_')).replace(' ', '_')
+        filename = f"{safe_name}.jpg"
+        filepath = os.path.join(save_dir, filename)
+        # Download image only if it doesn't already exist
+        if not os.path.exists(filepath):
+            img_data = requests.get(image_url).content
+            with open(filepath, 'wb') as f:
+                f.write(img_data)
+        return filename
+    except Exception as e:
+        print(f"Unsplash API/download error: {e}")
+        return None
 
 @app.route('/')
 def home():
@@ -69,26 +88,25 @@ def register():
         email = request.form.get('email')
         password = request.form.get('password')
         file = request.files.get('kyc')
-
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
+        if file and '.' in file.filename:
+            filename = file.filename
+            upload_dir = os.path.join('static', 'uploads')
+            if not os.path.exists(upload_dir):
+                os.makedirs(upload_dir)
+            file.save(os.path.join(upload_dir, filename))
         else:
-            flash("Invalid document type! Please upload PNG, JPG, JPEG, or PDF.")
+            flash("Invalid document type! Please upload a valid KYC document.")
             return redirect(request.url)
-
         db.users.insert_one({
             'role': role,
             'name': name,
             'email': email,
-            'password': password,   # In production, hash this!
+            'password': password,  # IMPORTANT: Hash passwords in production!
             'kyc_file': filename,
             'status': 'pending'
         })
         flash("Registration successful! Please wait for admin approval.")
         return redirect(url_for('home'))
-
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -141,25 +159,18 @@ def donate_food():
     if session.get('role') != 'donor':
         flash("Only donors can donate food.")
         return redirect(url_for('dashboard'))
+
     if request.method == 'POST':
         food_name = request.form.get('food_name')
         description = request.form.get('description')
         quantity = request.form.get('quantity')
         expiry_hours = int(request.form.get('expiry_hours'))
         donor_id = session.get('user_id')
-        photo_file = request.files.get('photo')
-        photo_filename = None
 
-        if photo_file and photo_file.filename:
-            if allowed_file(photo_file.filename):
-                photo_filename = "food_" + secure_filename(photo_file.filename)
-                photo_path = os.path.join(app.config['UPLOAD_FOLDER'], photo_filename)
-                photo_file.save(photo_path)
-            else:
-                flash("Invalid image file type (must be PNG/JPG/JPEG).")
-                return redirect(request.url)
-
+        # Download Unsplash image, fallback to default if fails
+        photo_filename = download_unsplash_image(food_name) or "default.jpg"
         expiry_time = datetime.utcnow() + timedelta(hours=expiry_hours)
+
         food_doc = {
             'food_name': food_name,
             'description': description,
@@ -182,9 +193,21 @@ def browse_food():
     if session.get('role') != 'recipient':
         flash('Only recipients can browse food.')
         return redirect(url_for('dashboard'))
+
     now = datetime.utcnow()
     foods = list(db.food.find({'status': 'approved', 'expiry_time': {'$gt': now}}).sort('timestamp', -1))
+
+    # Build image URL for each food, fallback to default.jpg if file missing
+    for food in foods:
+        image_path = os.path.join(UPLOAD_FOLDER, food.get('photo', ''))
+        if food.get('photo') and os.path.isfile(image_path):
+            food['img_url'] = url_for('static', filename='uploads/' + food['photo'])
+        else:
+            food['img_url'] = url_for('static', filename='uploads/default.jpg')
+
     return render_template('browse_food.html', foods=foods)
+
+# --- Order Food Route for Recipients ---
 
 @app.route('/order_food/<food_id>', methods=['POST'])
 @login_required
@@ -192,27 +215,41 @@ def order_food(food_id):
     if session.get('role') != 'recipient':
         flash('Only recipients can order food.')
         return redirect(url_for('dashboard'))
+
     recipient_id = session.get('user_id')
+
     updated = db.food.update_one(
         {'_id': ObjectId(food_id), 'status': 'approved'},
         {'$set': {
             'status': 'requested',
             'requested_by': recipient_id,
             'requested_at': datetime.utcnow()
-        }})
+        }}
+    )
+
     if updated.modified_count == 1:
         flash('Food requested! Please wait for confirmation.')
     else:
         flash('Unable to request this food.')
+
     return redirect(url_for('browse_food'))
 
-# ==== ADMIN ROUTES ====
+# --- Admin Routes ---
+
 @app.route('/admin')
 @login_required
 @admin_required
 def admin_dashboard():
     users = list(db.users.find({'status': 'pending'}))
     foods = list(db.food.find({'status': {'$in': ['pending', 'requested']}}))
+
+    for food in foods:
+        image_path = os.path.join(UPLOAD_FOLDER, food.get('photo', ''))
+        if food.get('photo') and os.path.isfile(image_path):
+            food['img_url'] = url_for('static', filename='uploads/' + food['photo'])
+        else:
+            food['img_url'] = url_for('static', filename='uploads/default.jpg')
+
     return render_template('admin_dashboard.html', users=users, foods=foods)
 
 @app.route('/admin/approve_user/<user_id>', methods=['POST'])
@@ -251,7 +288,8 @@ def reject_food(food_id):
 @login_required
 @admin_required
 def mark_delivered(food_id):
-    db.food.update_one({'_id': ObjectId(food_id)}, {'$set': {'status': 'delivered', 'delivered_at': datetime.utcnow()}})
+    db.food.update_one({'_id': ObjectId(food_id)},
+                       {'$set': {'status': 'delivered', 'delivered_at': datetime.utcnow()}})
     flash('Food marked as delivered.')
     return redirect(url_for('admin_dashboard'))
 

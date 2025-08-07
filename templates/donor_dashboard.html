@@ -2,46 +2,116 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Donor Dashboard | AnnaDaatha</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   <style>
     body { font-family: 'Inter', sans-serif; }
+    .ripple {
+      position: relative;
+      overflow: hidden;
+    }
+    .ripple:after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      background: rgba(255, 255, 255, 0.3);
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      transform: scale(0);
+    }
+    .ripple:active:after {
+      opacity: 1;
+      transform: scale(1);
+      transition: 0s;
+    }
+    .pulse-badge {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
+    }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
+<body class="bg-gray-100 min-h-screen flex flex-col">
 
   {% include "navbar.html" %}
 
-  <main class="flex-1">
-    <div class="max-w-2xl mx-auto p-8 mt-12 bg-white rounded-xl shadow">
-      <h2 class="text-2xl font-bold mb-6 text-green-700">Welcome, {{ name }} (Donor)</h2>
-      <div class="flex flex-col md:flex-row gap-4 mb-8">
-        <a href="/donate_food" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-center">Donate Food</a>
-        <a href="/logout" class="text-gray-500 underline px-4 py-2 rounded text-center">Logout</a>
+  <main class="flex-1 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl p-8 animate__animated animate__fadeInUp">
+      
+      <!-- Header -->
+      <h2 class="text-4xl font-extrabold text-center text-green-700 mb-10">
+        Welcome, {{ name }} <span class="text-2xl font-light">(Donor)</span>
+      </h2>
+
+      <!-- Actions -->
+      <div class="flex flex-col md:flex-row justify-center md:justify-between gap-6 mb-10">
+        <a href="/donate_food"
+           class="ripple bg-green-600 hover:bg-green-700 text-white font-semibold text-lg py-3 px-8 rounded-xl shadow-lg transition-transform transform hover:scale-105 active:scale-95 text-center">
+          Donate Food
+        </a>
+
+        <form action="/logout" method="get">
+          <button type="submit"
+            class="ripple bg-red-600 hover:bg-red-700 text-white font-semibold text-lg py-3 px-8 rounded-xl shadow-lg transition-transform transform hover:scale-105 active:scale-95">
+            Logout
+          </button>
+        </form>
       </div>
 
-      <h3 class="text-xl font-semibold mt-6 mb-2 text-green-800">Your Donated Food</h3>
+      <!-- Donated Food Section -->
+      <h3 class="text-2xl font-semibold text-green-800 mb-6 border-b border-green-200 pb-2">Your Donated Food</h3>
+
       {% if donated_foods %}
-        <ul class="space-y-4">
+        <ul class="space-y-6">
           {% for food in donated_foods %}
-            <li class="p-4 bg-green-50 rounded shadow flex flex-col md:flex-row md:items-center md:justify-between">
-              <div>
-                <strong>{{ food.food_name }}</strong>
-                <span class="ml-2 text-xs rounded px-2 py-1 {{ 'bg-yellow-200 text-yellow-900' if food.status == 'pending' else 'bg-green-200 text-green-900' if food.status == 'approved' else 'bg-gray-200 text-gray-800' if food.status == 'requested' else 'bg-blue-200 text-blue-900' if food.status == 'delivered' else 'bg-red-200 text-red-800' }}">{{ food.status|capitalize }}</span><br/>
-                Qty: {{ food.quantity }} | Expires {{ food.expiry_time.strftime('%Y-%m-%d %H:%M') }}<br/>
-                <span class="text-sm text-gray-500">{{ food.description }}</span>
+            <li class="bg-green-50 border border-green-100 rounded-2xl p-5 shadow-md hover:shadow-xl transform hover:scale-[1.015] transition duration-300">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                
+                <!-- Left: Image + Info -->
+                <div class="flex items-start md:items-center gap-5 flex-1">
+                  <img src="{{ url_for('static', filename='uploads/' + (food.photo or 'default.jpg')) }}"
+                       alt="Food Photo"
+                       class="w-20 h-20 rounded-full object-cover border-2 border-green-300 shadow-sm flex-shrink-0" />
+                  
+                  <div class="flex-1">
+                    <h4 class="text-xl font-bold text-green-900 truncate">{{ food.food_name }}</h4>
+                    <p class="text-gray-700 mt-1 truncate">{{ food.description }}</p>
+                    <div class="text-sm text-gray-600 mt-1 flex flex-wrap gap-3">
+                      <span><strong>Quantity:</strong> {{ food.quantity }}</span>
+                      <span><strong>Expires:</strong> {{ food.expiry_time.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right: Status -->
+                <div class="md:mt-0 mt-4">
+                  <span class="inline-block text-sm font-semibold tracking-wide px-4 py-1 rounded-full select-none
+                    {% if food.status == 'pending' %}bg-yellow-200 text-yellow-900
+                    {% elif food.status == 'approved' %}bg-green-200 text-green-900
+                    {% elif food.status == 'requested' %}bg-blue-200 text-blue-900
+                    {% elif food.status == 'delivered' %}bg-green-600 text-white pulse-badge
+                    {% else %}bg-gray-200 text-gray-800{% endif %}">
+                    {{ food.status|capitalize }}
+                  </span>
+                </div>
               </div>
-              {% if food.photo %}
-                <img src="{{ url_for('static', filename='uploads/' + food.photo) }}"
-                     alt="Food Photo"
-                     class="w-16 h-16 rounded object-cover mt-2 md:mt-0 border" />
-              {% endif %}
             </li>
           {% endfor %}
         </ul>
       {% else %}
-        <p class="text-gray-500">You haven’t donated any food yet. Your donations will appear here.</p>
+        <div class="text-center text-gray-500 py-16">
+          <p class="text-xl italic">You haven’t donated any food yet.</p>
+          <p class="mt-2 text-md">Start donating to make a real difference.</p>
+        </div>
       {% endif %}
     </div>
   </main>

@@ -5,96 +5,165 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Dashboard | AnnaDaatha</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <style>body { font-family: 'Inter', sans-serif; }</style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+
+    .ripple {
+      position: relative;
+      overflow: hidden;
+    }
+    .ripple:after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      background: rgba(255, 255, 255, 0.3);
+      opacity: 0;
+      transform: scale(0);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .ripple:active:after {
+      opacity: 1;
+      transform: scale(1);
+      transition: 0s;
+    }
+
+    .pulse-badge {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
+    }
+  </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-100 min-h-screen">
 
   {% include "navbar.html" %}
 
-  <div class="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-    <h2 class="text-2xl font-bold mb-6 text-green-700">Admin Dashboard</h2>
+  <div class="max-w-6xl mx-auto py-12 px-6 animate__animated animate__fadeInUp">
+    <h2 class="text-4xl font-extrabold text-green-700 mb-10 text-center">Admin Dashboard</h2>
 
-    <!-- Pending Users Section -->
-    <section class="mb-12">
-      <h3 class="text-lg font-bold mb-4">Pending Users:</h3>
+    <!-- Pending Users -->
+    <section class="mb-14 bg-white rounded-3xl p-8 shadow-md border border-green-100">
+      <h3 class="text-2xl font-semibold text-green-800 mb-6 border-b border-green-200 pb-2">Pending Users</h3>
+
       {% if users %}
-        <div class="space-y-4">
+        <ul class="space-y-5">
           {% for user in users %}
-            <div class="p-4 bg-white rounded border flex flex-col sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <strong>{{ user.name | e }}</strong>
+            <li class="p-5 bg-gray-50 rounded-xl border flex flex-col sm:flex-row sm:justify-between sm:items-center hover:shadow transition">
+              <div class="text-gray-800">
+                <strong class="text-green-800">{{ user.name | e }}</strong>
                 (<a href="mailto:{{ user.email | e }}" class="text-blue-600 underline">{{ user.email | e }}</a>)
-                - {{ user.role | capitalize | e }}
-                <span class="ml-2 text-gray-500">Status: {{ user.status | capitalize }}</span>
+                – {{ user.role | capitalize | e }}
+                <span class="ml-2 text-sm text-gray-500">Status: {{ user.status | capitalize }}</span>
               </div>
-              <div class="mt-3 sm:mt-0 flex flex-wrap gap-2">
-                <form action="{{ url_for('approve_user', user_id=user._id) }}" method="post" class="inline">
-                  <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 focus:outline-none focus:ring focus:ring-green-400">Approve</button>
+
+              <div class="mt-4 sm:mt-0 flex flex-wrap gap-3 items-center">
+                <form action="{{ url_for('approve_user', user_id=user._id) }}" method="post">
+                  <button class="ripple bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-medium shadow focus:ring-2 focus:ring-green-400">
+                    Approve
+                  </button>
                 </form>
-                <form action="{{ url_for('reject_user', user_id=user._id) }}" method="post" class="inline">
-                  <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 focus:outline-none focus:ring focus:ring-red-400">Reject</button>
+                <form action="{{ url_for('reject_user', user_id=user._id) }}" method="post">
+                  <button class="ripple bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-medium shadow focus:ring-2 focus:ring-red-400">
+                    Reject
+                  </button>
                 </form>
                 {% if user.kyc_file %}
-                  <a href="{{ url_for('static', filename='uploads/' + user.kyc_file) }}" target="_blank" rel="noopener" class="underline text-sm text-blue-700 ml-2">View KYC</a>
+                  <a href="{{ url_for('static', filename='uploads/' + user.kyc_file) }}"
+                     target="_blank" rel="noopener"
+                     class="text-sm text-blue-700 underline">
+                    View KYC
+                  </a>
                 {% endif %}
               </div>
-            </div>
+            </li>
           {% endfor %}
-        </div>
+        </ul>
       {% else %}
-        <p class="text-gray-500">No pending users.</p>
+        <p class="text-gray-500 italic text-center py-8">No pending users at the moment.</p>
       {% endif %}
     </section>
 
-    <!-- Pending/Requested Food Donations Section -->
-    <section>
-      <h3 class="text-lg font-bold mb-4">Pending Food Donations:</h3>
+    <!-- Pending/Requested Food Donations -->
+    <section class="bg-white rounded-3xl p-8 shadow-md border border-green-100">
+      <h3 class="text-2xl font-semibold text-green-800 mb-6 border-b border-green-200 pb-2">Pending Food Donations</h3>
+
       {% if foods %}
-        <div class="space-y-4">
+        <ul class="space-y-5">
           {% for food in foods %}
-            <div class="p-4 bg-white rounded border flex flex-col sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <strong>{{ food.food_name | e }}</strong>
-                <span class="ml-2 text-xs rounded px-2 py-1 
+            <li class="p-5 bg-gray-50 rounded-xl border hover:shadow transition flex flex-col sm:flex-row sm:justify-between sm:items-center">
+              <div class="text-gray-800 flex-1">
+                <strong class="text-green-800">{{ food.food_name | e }}</strong>
+                <span class="ml-3 inline-block text-xs font-semibold px-3 py-1 rounded-full select-none
                   {% if food.status == 'pending' %}bg-yellow-200 text-yellow-900
                   {% elif food.status == 'approved' %}bg-green-200 text-green-900
                   {% elif food.status == 'requested' %}bg-blue-200 text-blue-900
-                  {% elif food.status == 'delivered' %}bg-green-600 text-white
-                  {% else %}bg-gray-200 text-gray-800{% endif %}"
-                >{{ food.status|capitalize }}</span>
-                – {{ food.description | e }}<br />
-                <span class="font-semibold">Quantity:</span> {{ food.quantity }} &nbsp;|&nbsp;
-                <span class="font-semibold">Expires:</span> {{ food.expiry_time.strftime('%Y-%m-%d %H:%M') }}
+                  {% elif food.status == 'delivered' %}bg-green-600 text-white pulse-badge
+                  {% else %}bg-gray-200 text-gray-800{% endif %}">
+                  {{ food.status|capitalize }}
+                </span>
+
+                <p class="mt-1 text-sm">{{ food.description | e }}</p>
+                <p class="mt-2 text-sm">
+                  <span class="font-semibold">Quantity:</span> {{ food.quantity }} |
+                  <span class="font-semibold">Expires:</span> {{ food.expiry_time.strftime('%Y-%m-%d %H:%M') }}
+                </p>
+
+                {% if food.photo %}
+                  <div class="mt-3">
+                    <img src="{{ url_for('static', filename='uploads/' + food.photo) }}" alt="Food Photo"
+                         class="inline-block w-24 h-16 object-cover rounded shadow border" />
+                    <span class="text-xs text-gray-400 ml-2 italic">by Unsplash</span>
+                  </div>
+                {% endif %}
               </div>
-              <div class="mt-3 sm:mt-0 flex flex-wrap gap-2 items-center">
+
+              <div class="mt-4 sm:mt-0 flex flex-wrap gap-3 items-center justify-end">
                 {% if food.status == 'pending' %}
-                  <form action="{{ url_for('approve_food', food_id=food._id) }}" method="post" class="inline">
-                    <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 focus:outline-none focus:ring focus:ring-green-400">Approve</button>
+                  <form action="{{ url_for('approve_food', food_id=food._id) }}" method="post">
+                    <button class="ripple bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-medium shadow focus:ring-2 focus:ring-green-400">
+                      Approve
+                    </button>
                   </form>
-                  <form action="{{ url_for('reject_food', food_id=food._id) }}" method="post" class="inline">
-                    <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 focus:outline-none focus:ring focus:ring-red-400">Reject</button>
+                  <form action="{{ url_for('reject_food', food_id=food._id) }}" method="post">
+                    <button class="ripple bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-medium shadow focus:ring-2 focus:ring-red-400">
+                      Reject
+                    </button>
                   </form>
                 {% elif food.status == 'requested' %}
-                  <form action="{{ url_for('mark_delivered', food_id=food._id) }}" method="post" class="inline">
-                    <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 ml-2" type="submit">Mark Delivered</button>
+                  <form action="{{ url_for('mark_delivered', food_id=food._id) }}" method="post">
+                    <button class="ripple bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-medium shadow focus:ring-2 focus:ring-blue-300">
+                      Mark Delivered
+                    </button>
                   </form>
-                  <form action="{{ url_for('reject_food', food_id=food._id) }}" method="post" class="inline">
-                    <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 focus:outline-none focus:ring focus:ring-red-400">Reject</button>
+                  <form action="{{ url_for('reject_food', food_id=food._id) }}" method="post">
+                    <button class="ripple bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-medium shadow focus:ring-2 focus:ring-red-400">
+                      Reject
+                    </button>
                   </form>
-                {% endif %}
-                {% if food.photo %}
-                  <a href="{{ url_for('static', filename='uploads/' + food.photo) }}" target="_blank" rel="noopener" class="underline text-sm text-blue-700 ml-2">View Photo</a>
                 {% endif %}
               </div>
-            </div>
+            </li>
           {% endfor %}
-        </div>
+        </ul>
       {% else %}
-        <p class="text-gray-500">No pending food donations.</p>
+        <p class="text-gray-500 italic text-center py-8">No pending food donations at the moment.</p>
       {% endif %}
     </section>
 
-    <a href="/dashboard" class="block mt-8 text-sm text-green-700 hover:underline text-center">Back to Personal Dashboard</a>
+    <div class="mt-10 text-center">
+      <a href="/dashboard" class="text-green-700 text-sm font-medium underline hover:text-green-800 transition">
+        ← Back to Personal Dashboard
+      </a>
+    </div>
   </div>
+
 </body>
 </html>

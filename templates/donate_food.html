@@ -2,47 +2,90 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Donate Food | AnnaDaatha</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <style>
     body { font-family: 'Inter', sans-serif; }
+    #loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.9);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #166534;
+    }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
-
   {% include "navbar.html" %}
 
-  <main class="flex-1 flex items-center justify-center">
-    <form action="/donate_food" method="post" enctype="multipart/form-data"
-      class="bg-white shadow-lg rounded-xl p-8 max-w-md w-full mt-8">
-      <h2 class="text-2xl font-bold mb-6 text-green-700">Donate Food</h2>
+  <main class="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="bg-white rounded-2xl shadow-lg p-10 mx-auto max-w-lg">
+      <h2 class="text-3xl font-extrabold text-green-700 mb-8 text-center">Donate Food</h2>
+
       {% with messages = get_flashed_messages() %}
         {% if messages %}
-          <div class="mb-4 text-red-600 text-sm font-semibold">
+          <div class="mb-6 text-red-600 text-center font-semibold text-sm">
             {{ messages[0] }}
           </div>
         {% endif %}
       {% endwith %}
-      <label class="block mb-2 font-semibold" for="food_name">Food Name</label>
-      <input id="food_name" name="food_name" required class="mb-4 w-full p-2 border rounded focus:outline-none" />
 
-      <label class="block mb-2 font-semibold" for="description">Description</label>
-      <textarea id="description" name="description" required class="mb-4 w-full p-2 border rounded focus:outline-none"></textarea>
+      <form action="/donate_food" method="post" id="donateForm" class="space-y-6">
+        <div>
+          <label for="food_name" class="block font-semibold text-gray-700 mb-2">Food Name</label>
+          <input type="text" id="food_name" name="food_name" required placeholder="e.g. Veg Biryani"
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-600" />
+        </div>
 
-      <label class="block mb-2 font-semibold" for="quantity">Quantity (servings/units)</label>
-      <input id="quantity" type="number" name="quantity" required class="mb-4 w-full p-2 border rounded focus:outline-none" min="1" />
+        <div>
+          <label for="description" class="block font-semibold text-gray-700 mb-2">Description</label>
+          <textarea id="description" name="description" required placeholder="Brief description of the food"
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-green-600" rows="4"></textarea>
+        </div>
 
-      <label class="block mb-2 font-semibold" for="expiry_hours">Expiry Time (hours from now)</label>
-      <input id="expiry_hours" type="number" name="expiry_hours" required class="mb-4 w-full p-2 border rounded focus:outline-none" min="1" />
+        <div>
+          <label for="quantity" class="block font-semibold text-gray-700 mb-2">Quantity (servings/units)</label>
+          <input type="number" id="quantity" name="quantity" min="1" required
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-600" />
+        </div>
 
-      <label class="block mb-2 font-semibold" for="photo">Photo (optional)</label>
-      <input id="photo" type="file" name="photo" accept=".jpg,.jpeg,.png" class="mb-4 w-full" />
+        <div>
+          <label for="expiry_hours" class="block font-semibold text-gray-700 mb-2">Expiry Time (hours from now)</label>
+          <input type="number" id="expiry_hours" name="expiry_hours" min="1" required
+            class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-600" />
+        </div>
 
-      <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full" type="submit">Donate</button>
-      <a href="/dashboard" class="block mt-4 text-sm text-green-700 hover:underline text-center">Back to Dashboard</a>
-    </form>
+        <button type="submit" 
+          class="w-full bg-green-600 hover:bg-green-700 text-white text-lg font-semibold rounded-lg py-3 transition duration-300">
+          Donate
+        </button>
+      </form>
+
+      <a href="/dashboard" 
+        class="block mt-6 text-center text-green-700 font-semibold hover:underline">
+        Back to Dashboard
+      </a>
+    </div>
   </main>
 
+  <!-- Loading overlay -->
+  <div id="loading-overlay">
+    Generating AI image for your food... Please wait.
+  </div>
+
+  <script>
+    const form = document.getElementById("donateForm");
+    const overlay = document.getElementById("loading-overlay");
+
+    form.addEventListener("submit", () => {
+      overlay.style.display = "flex";
+    });
+  </script>
 </body>
 </html>

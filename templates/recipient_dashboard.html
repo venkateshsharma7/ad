@@ -5,14 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Recipient Dashboard | AnnaDaatha</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-  </style>
+  <style>body { font-family: 'Inter', sans-serif; }</style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
-
   {% include "navbar.html" %}
-
   <main class="flex-1">
     <div class="max-w-2xl mx-auto p-8 mt-12 bg-white rounded-xl shadow">
       <h2 class="text-2xl font-bold mb-6 text-green-700">Welcome, {{ name }} (Recipient)</h2>
@@ -20,7 +16,6 @@
         <a href="/browse_food" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-center">Browse Available Food</a>
         <a href="/logout" class="text-gray-500 underline px-4 py-2 rounded text-center">Logout</a>
       </div>
-      
       <h3 class="text-xl font-semibold mt-6 mb-2 text-green-800">Your Food Requests</h3>
       {% if my_orders %}
         <ul class="space-y-4">
@@ -28,31 +23,23 @@
             <li class="p-4 bg-green-50 rounded shadow flex flex-col md:flex-row md:items-center md:justify-between">
               <div>
                 <strong>{{ food.food_name }}</strong>
-                <span class="ml-2 text-xs rounded px-2 py-1 
-                  {% if food.status == 'pending' %}
-                    bg-yellow-200 text-yellow-900
-                  {% elif food.status == 'approved' %}
-                    bg-green-200 text-green-900
-                  {% elif food.status == 'requested' %}
-                    bg-blue-200 text-blue-900
-                  {% elif food.status == 'delivered' %}
-                    bg-green-600 text-white
-                  {% else %}
-                    bg-gray-200 text-gray-800
-                  {% endif %}
-                ">{{ food.status|capitalize }}</span><br/>
+                <span class="ml-2 text-xs rounded px-2 py-1
+                  {% if food.status == 'pending' %}bg-yellow-200 text-yellow-900
+                  {% elif food.status == 'approved' %}bg-green-200 text-green-900
+                  {% elif food.status == 'requested' %}bg-blue-200 text-blue-900
+                  {% elif food.status == 'delivered' %}bg-green-600 text-white
+                  {% else %}bg-gray-200 text-gray-800{% endif %}">
+                  {{ food.status|capitalize }}
+                </span><br/>
                 Qty: {{ food.quantity }}
                 {% if food.requested_at %}
                   <div class="text-sm text-gray-500">
                     Requested: {{ food.requested_at.strftime('%Y-%m-%d %H:%M') }}
                   </div>
                 {% endif %}
+                <div class="mt-1 text-xs text-gray-400">Food images by <a href="https://unsplash.com" class="underline" target="_blank" rel="noopener">Unsplash</a></div>
               </div>
-              {% if food.photo %}
-                <img src="{{ url_for('static', filename='uploads/' + food.photo) }}"
-                     alt="Food Photo"
-                     class="w-16 h-16 rounded object-cover mt-2 md:mt-0 border" />
-              {% endif %}
+              <img src="{{ url_for('static', filename='uploads/' + (food.photo or 'default.jpg')) }}" alt="Food Photo" class="w-16 h-16 rounded object-cover mt-2 md:mt-0 border" class="w-16 h-16 rounded object-cover mt-2 md:mt-0 border" />
             </li>
           {% endfor %}
         </ul>
@@ -61,6 +48,5 @@
       {% endif %}
     </div>
   </main>
-
 </body>
 </html>

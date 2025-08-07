@@ -5,35 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Available Food | AnnaDaatha</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <style>body { font-family: 'Inter', sans-serif; }</style>
+  <!-- Optional: Animate.css for fades and fun effects -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    /* Custom fade-in-up for card animation */
+    @keyframes fadeInUp {
+      from { opacity:0; transform: translateY(32px);}
+      to { opacity:1; transform: none;}
+    }
+    .fade-in-up { animation: fadeInUp 0.6s cubic-bezier(.39,.575,.565,1) both;}
+  </style>
 </head>
 <body class="bg-gray-50">
-
   {% include "navbar.html" %}
-
-  <div class="max-w-3xl mx-auto p-8 mt-12 bg-white rounded-xl shadow">
-    <h2 class="text-2xl font-bold mb-6 text-green-700">Available Food</h2>
+  <div class="max-w-5xl mx-auto px-2 md:px-8 py-12">
+    <h2 class="text-2xl font-bold mb-8 text-green-700 animate__animated animate__fadeInDown">Available Food</h2>
     {% if foods %}
-      <div class="space-y-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
         {% for food in foods %}
-          <div class="p-6 bg-green-50 rounded-lg shadow flex flex-col md:flex-row items-center md:items-start">
-            {% if food.photo %}
-              <img
-                src="{{ url_for('static', filename='uploads/' + food.photo) }}"
-                alt="Photo of {{ food.food_name }}"
-                class="w-32 h-32 rounded mr-6 mb-4 md:mb-0 object-cover border shadow"
-              />
-            {% endif %}
-            <div class="flex-1">
-              <h3 class="text-xl font-bold text-green-800">{{ food.food_name | e }}</h3>
-              <p class="text-gray-700 mb-1"><span class="font-semibold">Description:</span> {{ food.description | e }}</p>
-              <p class="text-gray-700 mb-1"><span class="font-semibold">Quantity:</span> {{ food.quantity }}</p>
-              <form action="/order_food/{{ food._id }}" method="post" class="mt-2">
-                <button
-                  class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 focus:outline-none focus:ring focus:ring-green-400"
-                  type="submit"
-                >
-                  Request This Food
+          <div class="group relative bg-white rounded-2xl shadow-lg hover:scale-105 hover:shadow-2xl transition-all flex flex-col overflow-hidden fade-in-up"
+               style="animation-delay: {{ loop.index0 * 120 }}ms">
+            <div class="relative h-56 overflow-hidden flex items-center justify-center">
+              <img src="{{ url_for('static', filename='uploads/' + (food.photo or 'default.jpg')) }}"
+                   alt="Food Photo"
+                   class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110" />
+            </div>
+            <div class="p-6 flex-1 flex flex-col">
+              <h3 class="text-xl font-extrabold text-green-900 mb-2 truncate animate__animated animate__pulse animate__delay-2s">{{ food.food_name }}</h3>
+              <p class="text-gray-700 mb-3 flex-1 truncate">{{ food.description }}</p>
+              <div class="flex items-center text-gray-500 text-sm mb-3">
+                <i class="fas fa-users mr-2"></i> {{ food.quantity }} servings
+                <span class="mx-2">|</span>
+                <i class="fas fa-clock mr-2"></i> Expires: {{ food.expiry_time.strftime('%I:%M %p, %b %d').lstrip('0') }}
+              </div>
+              <form action="/order_food/{{ food._id }}" method="post" class="mt-auto">
+                <button class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-full shadow font-semibold w-full transition-transform duration-150 transform hover:scale-105 active:scale-95">
+                  Request
                 </button>
               </form>
             </div>
@@ -41,10 +49,11 @@
         {% endfor %}
       </div>
     {% else %}
-      <p class="text-gray-500">Sorry, no food currently available.</p>
+      <p class="text-gray-500 animate__animated animate__fadeIn">Sorry, no food currently available.</p>
     {% endif %}
-    <a href="/dashboard" class="block mt-8 text-sm text-green-700 hover:underline text-center">Back to Dashboard</a>
+    <a href="/dashboard" class="block mt-12 text-sm text-green-700 hover:underline text-center transition-opacity duration-200 hover:opacity-70">Back to Dashboard</a>
+    <p class="text-xs text-gray-400 mt-4">Food images by <a href="https://unsplash.com" class="underline" target="_blank" rel="noopener">Unsplash</a></p>
   </div>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 </body>
 </html>
